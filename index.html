@@ -2,26 +2,86 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Calculator</title>
+<title>My Website</title>
+<style>
+body{
+  margin:0;
+  font-family: Arial, sans-serif;
+  text-align:center;
+  background:white;
+}
+#start{
+  margin-top:150px;
+}
+button{
+  padding:20px 40px;
+  font-size:20px;
+  cursor:pointer;
+}
+</style>
 </head>
 <body>
 
-<input id="a">
-<input id="b">
-<button onclick="calc()">+</button>
-<h2 id="res"></h2>
+<div id="start">
+  <h1>Добро пожаловать 😎</h1>
+  <p>Нажмите для продолжения</p>
+  <button onclick="launch()">Продолжить</button>
+</div>
 
 <script>
-function calc(){
-  let a = Number(document.getElementById("a").value);
-  let b = Number(document.getElementById("b").value);
-  document.getElementById("res").innerText = a + b;
+function launch(){
+  if (document.documentElement.requestFullscreen) {
+    document.documentElement.requestFullscreen().catch(()=>{});
+  }
+  setTimeout(showBSOD, 1500);
 }
+
+function showBSOD(){
+  document.body.innerHTML = `
+  <div style="background:#0078D7;color:white;height:100vh;padding:80px;font-family:'Segoe UI',sans-serif;cursor:none;">
+    <div style="font-size:120px;">:(</div>
+    <div style="font-size:28px;margin-top:20px;">
+      Your device ran into a problem and needs to restart.<br>
+      We're just collecting some error info, and then we'll restart for you.
+    </div>
+    <div style="font-size:24px;margin-top:20px;">
+      <span id="percent">0%</span> complete
+    </div>
+    <div style="margin-top:40px;font-size:18px;">
+      For more information visit windows.com/stopcode<br><br>
+      Stop code: CRITICAL_PROCESS_DIED
+    </div>
+  </div>
+  `;
+
+  let p = 0;
+  let interval = setInterval(()=>{
+    p++;
+    document.getElementById("percent").innerText = p + "%";
+    if(p >= 100){
+      clearInterval(interval);
+      fakeRestart();
+    }
+  }, 120);
+}
+
+function fakeRestart(){
+  document.body.innerHTML = `
+  <div style="background:black;color:white;height:100vh;display:flex;justify-content:center;align-items:center;font-size:40px;font-family:sans-serif;">
+    Restarting...
+  </div>
+  `;
+
+  setTimeout(()=>{
+    if (document.exitFullscreen) {
+      document.exitFullscreen().catch(()=>{});
+    }
+    location.reload();
+  }, 3000);
+}
+
+document.addEventListener("contextmenu", e => e.preventDefault());
 </script>
 
 </body>
-</html>            
-
-         <script>
-alert("Hi!");
-         </script>  
+</html>
