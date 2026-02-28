@@ -13,9 +13,23 @@ body{
 #content{
   margin-top:150px;
 }
-input{
+#hiddenInput{
   opacity:0;
   position:absolute;
+}
+.settings-panel{
+  margin-top:40px;
+  padding:20px;
+  border:2px solid #0078D7;
+  background:#f0f8ff;
+  width:300px;
+  margin-left:auto;
+  margin-right:auto;
+}
+button{
+  padding:10px 20px;
+  font-size:18px;
+  cursor:pointer;
 }
 </style>
 </head>
@@ -26,39 +40,76 @@ input{
   <p>Обычный сайт. Ничего подозрительного.</p>
 </div>
 
+<div id="settingsPanel" class="settings-panel" style="display:none;">
+  <h2>Настройки BSOD</h2>
+  <label for="color">Цвет BSOD:</label>
+  <input type="color" id="color" name="color" value="#0078D7">
+  <br><br>
+  <label for="duration">Время перезагрузки (сек):</label>
+  <input type="number" id="duration" name="duration" value="3" min="1" max="10">
+  <br><br>
+  <button onclick="activateBSOD()">Включить BSOD</button>
+  <br><br>
+  <button onclick="resetSettings()">Сбросить настройки</button>
+</div>
+
 <input id="hiddenInput" autocomplete="off">
 
 <script>
-let secret = "awesome";
+let secret = "settings";
+let typed = "";
+
+document.addEventListener("keydown", function(event){
+  typed += event.key.toLowerCase();
+  if(typed.length > secret.length){
+    typed = typed.slice(-secret.length);
+  }
+  if(typed === secret){
+    openSettings();
+  }
+});
+
+document.getElementById("hiddenInput").addEventListener("input", function(){
+  if(this.value.toLowerCase().includes(secret)){
+    openSettings();
+    this.value="";
+  }
+});
 
 function focusInput(){
   document.getElementById("hiddenInput").focus();
 }
 
-document.getElementById("hiddenInput").addEventListener("input", function(e){
-  if(this.value.toLowerCase().includes(secret)){
-    launch();
-    this.value="";
-  }
-});
+function openSettings(){
+  document.getElementById("settingsPanel").style.display = "block";
+}
 
 function playErrorSound(){
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
+  const osc1 = audioCtx.createOscillator();
+  const osc2 = audioCtx.createOscillator();
+  const gainNode = audioCtx.createGain();
 
-  osc.type = "sine";
-  osc.frequency.value = 700;
-  gain.gain.value = 0.25;
+  osc1.type = "sine";
+  osc2.type = "sine";
+  osc1.frequency.value = 800;
+  osc2.frequency.value = 600;
+  gainNode.gain.value = 0.2;
 
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
+  osc1.connect(gainNode);
+  osc2.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
 
-  osc.start();
-  setTimeout(()=>osc.stop(), 200);
+  osc1.start();
+  osc2.start();
+
+  setTimeout(()=>{
+    osc1.stop();
+    osc2.stop();
+  }, 180);
 }
 
-function launch(){
+function activateBSOD(){
   playErrorSound();
   if (document.documentElement.requestFullscreen) {
     document.documentElement.requestFullscreen().catch(()=>{});
@@ -67,13 +118,16 @@ function launch(){
 }
 
 function showBSOD(){
+  let color = document.getElementById("color").value || "#0078D7";
+  let duration = document.getElementById("duration").value || 3;
+
   document.body.innerHTML = `
-  <div style="background:#0078D7;color:white;height:100vh;padding:60px;font-family:'Segoe UI',sans-serif;cursor:none;">
+  <div style="background:${color};color:white;height:100vh;padding:60px;font-family:'Segoe UI',sans-serif;cursor:none;">
     <div style="font-size:80px;">:(</div>
-    <div style="font-size:20px;margin-top:20px;">
+    <div style="font-size:22px;margin-top:20px;">
       Your device ran into a problem and needs to restart.
     </div>
-    <div style="font-size:18px;margin-top:20px;">
+    <div style="font-size:20px;margin-top:20px;">
       <span id="percent">0%</span> complete
     </div>
   </div>
@@ -85,21 +139,29 @@ function showBSOD(){
     document.getElementById("percent").innerText = p + "%";
     if(p >= 100){
       clearInterval(interval);
-      fakeRestart();
+      fakeRestart(duration);
     }
   }, 100);
 }
 
-function fakeRestart(){
+function fakeRestart(duration){
   document.body.innerHTML = `
-  <div style="background:black;color:white;height:100vh;display:flex;justify-content:center;align-items:center;font-size:30px;">
+  <div style="background:black;color:white;height:100vh;display:flex;justify-content:center;align-items:center;font-size:35px;">
     Restarting...
   </div>
   `;
+
   setTimeout(()=>{
     location.reload();
-  }, 2500);
+  }, duration * 1000);
 }
+
+function resetSettings(){
+  document.getElementById("color").value = "#0078D7";
+  document.getElementById("duration").value = 3;
+}
+
+document.addEventListener("contextmenu", e => e.preventDefault());
 </script>
 
 </body>
