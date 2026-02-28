@@ -1,167 +1,117 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>My Website</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Windows 7 - System Error</title>
+
 <style>
-body{
-  margin:0;
-  font-family: Arial, sans-serif;
-  text-align:center;
-  background:white;
+body {
+  margin: 0;
+  background: #0000AA;
+  color: #FFFFFF;
+  font-family: "Lucida Console", monospace;
+  font-size: 18px;
+  padding: 40px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
-#content{
-  margin-top:150px;
+
+h1 {
+  font-size: 60px;
 }
-#hiddenInput{
-  opacity:0;
-  position:absolute;
+
+.text {
+  font-size: 20px;
+  margin-top: 20px;
 }
-.settings-panel{
-  margin-top:40px;
-  padding:20px;
-  border:2px solid #0078D7;
-  background:#f0f8ff;
-  width:300px;
-  margin-left:auto;
-  margin-right:auto;
+
+.stop {
+  margin-top: 40px;
+  font-size: 16px;
 }
-button{
-  padding:10px 20px;
-  font-size:18px;
-  cursor:pointer;
+
+.percent {
+  margin-top: 20px;
+  font-size: 18px;
+}
+
+.blink {
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
 }
 </style>
 </head>
-<body onclick="focusInput()">
 
-<div id="content">
-  <h1>Добро пожаловать 😎</h1>
-  <p>Обычный сайт. Ничего подозрительного.</p>
+<body onclick="start()">
+
+<h1>:(</h1>
+
+<div class="text">
+  Ваше устройство столкнулось с проблемой и должно быть перезапущено.<br>
+  Мы собираем информацию о неисправности и перезапускаем устройство.
 </div>
 
-<div id="settingsPanel" class="settings-panel" style="display:none;">
-  <h2>Настройки BSOD</h2>
-  <label for="color">Цвет BSOD:</label>
-  <input type="color" id="color" name="color" value="#0078D7">
-  <br><br>
-  <label for="duration">Время перезагрузки (сек):</label>
-  <input type="number" id="duration" name="duration" value="3" min="1" max="10">
-  <br><br>
-  <button onclick="activateBSOD()">Включить BSOD</button>
-  <br><br>
-  <button onclick="resetSettings()">Сбросить настройки</button>
+<div class="stop">
+  Stop code: CRITICAL_PROCESS_DIED
 </div>
 
-<input id="hiddenInput" autocomplete="off">
+<div class="percent" id="percent">0% complete</div>
 
 <script>
-let secret = "settings";
-let typed = "";
+let started = false;
 
-document.addEventListener("keydown", function(event){
-  typed += event.key.toLowerCase();
-  if(typed.length > secret.length){
-    typed = typed.slice(-secret.length);
-  }
-  if(typed === secret){
-    openSettings();
-  }
-});
+function start() {
+  if (started) return;
+  started = true;
 
-document.getElementById("hiddenInput").addEventListener("input", function(){
-  if(this.value.toLowerCase().includes(secret)){
-    openSettings();
-    this.value="";
-  }
-});
-
-function focusInput(){
-  document.getElementById("hiddenInput").focus();
-}
-
-function openSettings(){
-  document.getElementById("settingsPanel").style.display = "block";
-}
-
-function playErrorSound(){
+  // Процесс с имитацией звука ошибки
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  const osc1 = audioCtx.createOscillator();
-  const osc2 = audioCtx.createOscillator();
-  const gainNode = audioCtx.createGain();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
 
-  osc1.type = "sine";
-  osc2.type = "sine";
-  osc1.frequency.value = 800;
-  osc2.frequency.value = 600;
-  gainNode.gain.value = 0.2;
+  osc.type = "square";
+  osc.frequency.value = 150;
 
-  osc1.connect(gainNode);
-  osc2.connect(gainNode);
-  gainNode.connect(audioCtx.destination);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
 
-  osc1.start();
-  osc2.start();
+  gain.gain.value = 0.3;
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.3);
 
-  setTimeout(()=>{
-    osc1.stop();
-    osc2.stop();
-  }, 180);
-}
+  // Процесс отображения процентов
+  let i = 0;
+  let percent = document.getElementById("percent");
 
-function activateBSOD(){
-  playErrorSound();
-  if (document.documentElement.requestFullscreen) {
-    document.documentElement.requestFullscreen().catch(()=>{});
-  }
-  setTimeout(showBSOD, 600);
-}
+  let interval = setInterval(() => {
+    i += Math.floor(Math.random() * 4) + 1;
+    if (i > 100) i = 100;
 
-function showBSOD(){
-  let color = document.getElementById("color").value || "#0078D7";
-  let duration = document.getElementById("duration").value || 3;
+    percent.innerText = i + "% complete";
 
-  document.body.innerHTML = `
-  <div style="background:${color};color:white;height:100vh;padding:60px;font-family:'Segoe UI',sans-serif;cursor:none;">
-    <div style="font-size:80px;">:(</div>
-    <div style="font-size:22px;margin-top:20px;">
-      Your device ran into a problem and needs to restart.
-    </div>
-    <div style="font-size:20px;margin-top:20px;">
-      <span id="percent">0%</span> complete
-    </div>
-  </div>
-  `;
-
-  let p = 0;
-  let interval = setInterval(()=>{
-    p++;
-    document.getElementById("percent").innerText = p + "%";
-    if(p >= 100){
+    if (i >= 100) {
       clearInterval(interval);
-      fakeRestart(duration);
+      setTimeout(restart, 1500);
     }
-  }, 100);
+  }, 120);
 }
 
-function fakeRestart(duration){
+function restart() {
   document.body.innerHTML = `
-  <div style="background:black;color:white;height:100vh;display:flex;justify-content:center;align-items:center;font-size:35px;">
-    Restarting...
+  <div style="background:black;color:white;height:100vh;
+  display:flex;justify-content:center;align-items:center;
+  font-size:40px;font-family:sans-serif;">
+  Restarting...
   </div>
   `;
-
-  setTimeout(()=>{
-    location.reload();
-  }, duration * 1000);
+  setTimeout(() => location.reload(), 3000);
 }
-
-function resetSettings(){
-  document.getElementById("color").value = "#0078D7";
-  document.getElementById("duration").value = 3;
-}
-
-document.addEventListener("contextmenu", e => e.preventDefault());
 </script>
 
 </body>
