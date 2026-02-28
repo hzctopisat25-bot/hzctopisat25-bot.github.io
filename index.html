@@ -10,30 +10,67 @@ body{
   text-align:center;
   background:white;
 }
-#start{
+#content{
   margin-top:150px;
-}
-button{
-  padding:20px 40px;
-  font-size:20px;
-  cursor:pointer;
 }
 </style>
 </head>
 <body>
 
-<div id="start">
+<div id="content">
   <h1>Добро пожаловать 😎</h1>
-  <p>Нажмите для продолжения</p>
-  <button onclick="launch()">Продолжить</button>
+  <p>Обычный сайт. Ничего подозрительного.</p>
 </div>
 
 <script>
+let secret = "awesome";
+let typed = "";
+
+document.addEventListener("keydown", function(event){
+  typed += event.key.toLowerCase();
+  if(typed.length > secret.length){
+    typed = typed.slice(-secret.length);
+  }
+  if(typed === secret){
+    launch();
+  }
+});
+
+function playErrorSound(){
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  const osc1 = audioCtx.createOscillator();
+  const osc2 = audioCtx.createOscillator();
+  const gainNode = audioCtx.createGain();
+
+  osc1.type = "sine";
+  osc2.type = "sine";
+
+  osc1.frequency.value = 800;
+  osc2.frequency.value = 600;
+
+  gainNode.gain.value = 0.2;
+
+  osc1.connect(gainNode);
+  osc2.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+
+  osc1.start();
+  osc2.start();
+
+  setTimeout(()=>{
+    osc1.stop();
+    osc2.stop();
+  }, 180);
+}
+
 function launch(){
+  playErrorSound();
+
   if (document.documentElement.requestFullscreen) {
     document.documentElement.requestFullscreen().catch(()=>{});
   }
-  setTimeout(showBSOD, 1500);
+  setTimeout(showBSOD, 600);
 }
 
 function showBSOD(){
@@ -48,7 +85,6 @@ function showBSOD(){
       <span id="percent">0%</span> complete
     </div>
     <div style="margin-top:40px;font-size:18px;">
-      For more information visit windows.com/stopcode<br><br>
       Stop code: CRITICAL_PROCESS_DIED
     </div>
   </div>
@@ -71,7 +107,6 @@ function fakeRestart(){
     Restarting...
   </div>
   `;
-
   setTimeout(()=>{
     if (document.exitFullscreen) {
       document.exitFullscreen().catch(()=>{});
