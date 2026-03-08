@@ -1,40 +1,449 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Windows 7 - System Error</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DOOM: Mobile (Swipe to look)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background: #000;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+        #game-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            image-rendering: pixelated;
+            background: #111;
+        }
+        #hud {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            color: white;
+            text-shadow: 2px 2px 0 #f00;
+            font-size: 16px;
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            background: rgba(0,0,0,0.7);
+            border: 2px solid #a00;
+            border-radius: 10px;
+            z-index: 20;
+            backdrop-filter: blur(4px);
+        }
+        #weapon {
+            position: absolute;
+            bottom: 100px;
+            right: 20px;
+            color: #ffaa00;
+            font-size: 20px;
+            font-weight: bold;
+            background: rgba(0,0,0,0.6);
+            padding: 8px 16px;
+            border-radius: 30px;
+            border: 2px solid #ffaa00;
+            z-index: 20;
+        }
+        #episode {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #ffaa00;
+            font-size: 14px;
+            background: rgba(0,0,0,0.6);
+            padding: 6px 12px;
+            border-radius: 4px;
+            z-index: 20;
+        }
+        #controls-hint {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #aaa;
+            font-size: 12px;
+            background: rgba(0,0,0,0.6);
+            padding: 6px 12px;
+            border-radius: 4px;
+            z-index: 20;
+        }
+        /* Джойстик */
+        #joystick-area {
+            position: absolute;
+            bottom: 120px;
+            left: 30px;
+            width: 130px;
+            height: 130px;
+            border-radius: 65px;
+            background: rgba(255,153,0,0.2);
+            border: 3px solid #ff9900;
+            z-index: 30;
+            touch-action: none;
+        }
+        #joystick-knob {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: #ff9900;
+            border-radius: 25px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 20px #ff9900;
+            pointer-events: none;
+        }
+        /* Кнопка стрельбы */
+        #fire-button {
+            position: absolute;
+            bottom: 120px;
+            right: 30px;
+            width: 100px;
+            height: 100px;
+            border-radius: 50px;
+            background: rgba(255,0,0,0.3);
+            border: 4px solid #ff0000;
+            z-index: 30;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            text-shadow: 0 0 10px #f00;
+            touch-action: none;
+        }
+        /* Область свайпа для поворота */
+        #look-area {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50%;
+            height: 100%;
+            z-index: 25;
+            background: transparent;
+            touch-action: none;
+        }
+        #look-hint {
+            position: absolute;
+            top: 50%;
+            right: 20%;
+            transform: translateY(-50%);
+            color: rgba(255,255,255,0.3);
+            font-size: 16px;
+            white-space: nowrap;
+            z-index: 26;
+            pointer-events: none;
+            background: rgba(0,0,0,0.3);
+            padding: 8px 16px;
+            border-radius: 30px;
+            border: 1px solid #33aaff;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="game-canvas"></canvas>
+    
+    <!-- HUD -->
+    <div id="episode">E1M1: HANGAR</div>
+    <div id="controls-hint">👆 Левый край: движение | Правый край: поворот | Красная кнопка: огонь</div>
+    <div id="hud">
+        <span>❤️ <span id="health">100</span></span>
+        <span>🔫 <span id="ammo">50</span></span>
+        <span>💀 <span id="kills">0</span>/5</span>
+    </div>
+    <div id="weapon">ПИСТОЛЕТ</div>
+    
+    <!-- Управление -->
+    <div id="joystick-area">
+        <div id="joystick-knob"></div>
+    </div>
+    
+    <div id="fire-button">🔫</div>
+    
+    <div id="look-area"></div>
+    <div id="look-hint">← свайп для поворота →</div>
 
-<style>
-body {
-  margin: 0;
-  background: #0000AA;
-  color: #FFFFFF;
-  font-family: "Lucida Console", monospace;
-  font-size: 18px;
-  padding: 40px;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-h1 {
-  font-size: 60px;
-}
-
-.text {
-  font-size: 20px;
-  margin-top: 20px;
-}
-
-.stop {
-  margin-top: 40px;
-  font-size: 16px;
-}
-
-.percent {
-  margin-top: 20px;
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('game-canvas');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            const ctx = canvas.getContext('2d');
+            
+            // --- Карта ---
+            const map = [
+                [1,1,1,1,1,1,1,1],
+                [1,0,0,0,0,0,0,1],
+                [1,0,1,1,1,0,0,1],
+                [1,0,1,2,1,0,0,1],
+                [1,0,1,1,1,0,0,1],
+                [1,0,0,0,0,0,0,1],
+                [1,0,0,0,0,0,0,1],
+                [1,1,1,1,1,1,1,1]
+            ];
+            
+            // --- Игрок ---
+            const player = {
+                x: 3.5,
+                y: 3.5,
+                angle: 0,
+                health: 100,
+                ammo: 50,
+                kills: 0
+            };
+            
+            // --- Монстры ---
+            const monsters = [
+                { x: 5.5, y: 2.5, health: 30, active: true },
+                { x: 2.5, y: 5.5, health: 30, active: true },
+                { x: 6.5, y: 6.5, health: 30, active: true },
+                { x: 4.5, y: 2.5, health: 30, active: true },
+                { x: 3.5, y: 6.5, health: 30, active: true }
+            ];
+            
+            // --- Джойстик ---
+            const joystick = document.getElementById('joystick-area');
+            const knob = document.getElementById('joystick-knob');
+            let moveX = 0, moveY = 0;
+            let joystickActive = false;
+            
+            joystick.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                joystickActive = true;
+                updateJoystick(e.touches[0]);
+            });
+            
+            joystick.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (joystickActive) updateJoystick(e.touches[0]);
+            });
+            
+            joystick.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                joystickActive = false;
+                knob.style.transform = 'translate(-50%, -50%)';
+                moveX = 0;
+                moveY = 0;
+            });
+            
+            function updateJoystick(touch) {
+                const rect = joystick.getBoundingClientRect();
+                const centerX = rect.left + rect.width/2;
+                const centerY = rect.top + rect.height/2;
+                
+                let dx = touch.clientX - centerX;
+                let dy = touch.clientY - centerY;
+                
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                const maxDist = rect.width/2;
+                
+                if (dist > maxDist) {
+                    dx = dx * maxDist / dist;
+                    dy = dy * maxDist / dist;
+                }
+                
+                knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+                
+                moveX = dx / maxDist;
+                moveY = -dy / maxDist;
+            }
+            
+            // --- Свайп для поворота ---
+            const lookArea = document.getElementById('look-area');
+            let lastTouchX = null;
+            
+            lookArea.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                lastTouchX = e.touches[0].clientX;
+            });
+            
+            lookArea.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (lastTouchX !== null) {
+                    const touchX = e.touches[0].clientX;
+                    const delta = touchX - lastTouchX;
+                    
+                    // Поворачиваем камеру пропорционально свайпу
+                    player.angle += delta * 0.01;
+                    
+                    lastTouchX = touchX;
+                }
+            });
+            
+            lookArea.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                lastTouchX = null;
+            });
+            
+            // --- Стрельба ---
+            const fireBtn = document.getElementById('fire-button');
+            let isFiring = false;
+            let fireTimer = 0;
+            
+            fireBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                isFiring = true;
+            });
+            
+            fireBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                isFiring = false;
+            });
+            
+            // --- Движение ---
+            function updateMovement() {
+                if (joystickActive && (Math.abs(moveX) > 0.1 || Math.abs(moveY) > 0.1)) {
+                    const speed = 0.05;
+                    const moveAngle = Math.atan2(moveX, moveY);
+                    
+                    const newX = player.x + Math.sin(player.angle + moveAngle) * speed;
+                    const newY = player.y + Math.cos(player.angle + moveAngle) * speed;
+                    
+                    const mx = Math.floor(newX);
+                    const my = Math.floor(newY);
+                    
+                    if (map[my] && map[my][mx] === 0) {
+                        player.x = newX;
+                        player.y = newY;
+                    }
+                }
+            }
+            
+            // --- Стрельба ---
+            function updateFiring() {
+                if (isFiring && player.ammo > 0 && fireTimer <= 0) {
+                    player.ammo--;
+                    fireTimer = 10;
+                    
+                    for (let i = 0; i < monsters.length; i++) {
+                        const m = monsters[i];
+                        if (!m.active) continue;
+                        
+                        const dx = m.x - player.x;
+                        const dy = m.y - player.y;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        
+                        if (dist < 2.5) {
+                            m.health -= 20;
+                            if (m.health <= 0) {
+                                m.active = false;
+                                player.kills++;
+                            }
+                            break;
+                        }
+                    }
+                }
+                
+                if (fireTimer > 0) fireTimer--;
+            }
+            
+            // --- Рендер ---
+            function render() {
+                const w = canvas.width;
+                const h = canvas.height;
+                
+                // Пол/потолок
+                ctx.fillStyle = '#222';
+                ctx.fillRect(0, 0, w, h/2);
+                ctx.fillStyle = '#444';
+                ctx.fillRect(0, h/2, w, h/2);
+                
+                // Рейкастинг
+                const fov = Math.PI / 2.2;
+                
+                for (let x = 0; x < w; x += 3) {
+                    const angle = player.angle - fov/2 + (x / w) * fov;
+                    
+                    let dist = 0;
+                    let hit = false;
+                    
+                    while (!hit && dist < 15) {
+                        dist += 0.1;
+                        const tx = player.x + Math.cos(angle) * dist;
+                        const ty = player.y + Math.sin(angle) * dist;
+                        
+                        const mx = Math.floor(tx);
+                        const my = Math.floor(ty);
+                        
+                        if (mx < 0 || mx >= 8 || my < 0 || my >= 8) {
+                            hit = true;
+                            dist = 15;
+                        } else if (map[my][mx] !== 0) {
+                            hit = true;
+                            
+                            const wallHeight = (h / (dist * Math.cos(angle - player.angle))) * 0.8;
+                            const shade = Math.max(0.3, 1 - dist / 15);
+                            
+                            ctx.fillStyle = map[my][mx] === 1 ? '#888' : '#a55';
+                            ctx.fillRect(x, h/2 - wallHeight/2, 3, wallHeight);
+                        }
+                    }
+                }
+                
+                // Монстры
+                monsters.forEach(m => {
+                    if (!m.active) return;
+                    
+                    const dx = m.x - player.x;
+                    const dy = m.y - player.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    
+                    if (dist < 8) {
+                        const angleToMonster = Math.atan2(dy, dx);
+                        let angleDiff = angleToMonster - player.angle;
+                        
+                        while (angleDiff > Math.PI) angleDiff -= 2*Math.PI;
+                        while (angleDiff < -Math.PI) angleDiff += 2*Math.PI;
+                        
+                        if (Math.abs(angleDiff) < fov/2) {
+                            const screenX = (angleDiff + fov/2) / fov * w;
+                            const size = 30 / dist;
+                            
+                            ctx.fillStyle = '#f44';
+                            ctx.fillRect(screenX - size/2, h/2 - size, size, size*2);
+                        }
+                    }
+                });
+                
+                // HUD
+                document.getElementById('health').textContent = player.health;
+                document.getElementById('ammo').textContent = player.ammo;
+                document.getElementById('kills').textContent = player.kills;
+            }
+            
+            // --- Игровой цикл ---
+            function gameLoop() {
+                updateMovement();
+                updateFiring();
+                render();
+                requestAnimationFrame(gameLoop);
+            }
+            
+            gameLoop();
+            
+            // Запрет скролла
+            document.body.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+            window.addEventListener('resize', () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            });
+        });
+    </script>
+</body>
+</html>  margin-top: 20px;
   font-size: 18px;
 }
 
